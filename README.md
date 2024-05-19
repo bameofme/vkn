@@ -26,3 +26,42 @@ Please refer to the `package.json` file for the exact versions of these dependen
 ## Contributing
 
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+## Thư mục src
+- Thư mục này sẽ chưa code xử ly cho backend
+- app.js xem như main.c. Nó sẽ gọi hàm runSystem. Hàm này được khai báo trong routes/gatewayAPI.js
+```js
+        const { runSystem } = require('./routes/gatewayAPI'); //cái require này nó giống kiểu mình include ấy
+```
+- File gatewayAPI.js
+```js
+const { passport, accFnc } = require('./account'); // Cái này mình include phần xư lý cho account service
+const express = require('express'); //express là 1 module của nodejs để hổ trợ quản lý server và xử lý request sau em sẽ thấy
+const session = require('express-session'); // express session dùng để quản lý session cái này giúp em có thể đăng nhập được nè
+const app = express(); //cái này là khởi tạo app nè nếu thấy hỏi thì em bảo là ví dụ mấu của bon express https://www.npmjs.com/package/express
+const mongoose = require('mongoose'); // module hổ trợ làm việc với mongodb
+const router = express.Router(); // cái này là khởi tạo cho phần xử lý request
+const path = require('path'); // module này dùng để xử lý đường dẫn file
+const flash = require('express-flash'); // Cái này dùng để khi người dùng họ gửi request ấy thì mình sẽ gửi lại file html ấy
+// thì cái flash này sẽ giúp gửi biến đến file đấy. Cái này em hiểu nó như mình có mấy cái <%ejGet(snmpSysName)%> thì flash sẽ điền cái snmpSysName
+```
+- Trong hàm runSystem().
+```js
+    function runSystem()
+{
+    mongoose.connect('mongodb://127.0.0.1:27017/test') // Cái này là để mình kết nối đến database
+    .then(() => console.log('Connected!')); // kết nối thành công thì hiển thị Connected!. Hàm console.log là hàm dùng để print
+    // cái này là sử dụng session nè
+    app.use(session({ secret: 'your session secret', resave: false, saveUninitialized: false }));
+    app.use(passport.initialize()); // passport là module hổ trợ việc đăng nhập, đăng kí xác thực tài khoản
+    app.use(passport.session()); // phần này thì em cứ bảo em lấy ví dụ trên mạng hoặc chatgpt nè 
+    app.use(express.static(path.join(__dirname, '../../public'))); // cái này là để cài đặt các file css,js mình load ở đâu nè
+    app.use(express.urlencoded({ extended: true }));
+    app.use(flash());
+    app.set('view engine', 'ejs');
+    app.set('views', path.join(__dirname, '../../public/account'));
+    // Routes
+    app.use('/', router);
+    const port = process.env.PORT || 3000;
+    app.listen(port, () => console.log(`Server is listening on port ${port}`));
+}
+```

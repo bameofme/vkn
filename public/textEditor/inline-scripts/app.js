@@ -42,11 +42,9 @@ const app = {
 // Verify the APIs we need are supported, show a polite warning if not.
 if (app.hasFSAccess) {
   document.getElementById('not-supported').classList.add('hidden');
-  // gaEvent('File System APIs', 'FSAccess');
 } else {
   document.getElementById('lblLegacyFS').classList.toggle('hidden', false);
   document.getElementById('butSave').classList.toggle('hidden', true);
-  // gaEvent('File System APIs', 'Legacy');
 }
 
 /**
@@ -61,7 +59,6 @@ app.newFile = () => {
   app.setFile();
   app.setModified(false);
   app.setFocus(true);
-  // gaEvent('FileAction', 'New');
 };
 
 
@@ -74,49 +71,51 @@ app.openFile = async (fileHandle) => {
   if (!app.confirmDiscard()) {
     return;
   }
-
-  if (app.isLocal)
-  {
+  if (app.isLocal) {
     // If the File System Access API is not supported, use the legacy file apis.
     if (!app.hasFSAccess) {
-      // gaEvent('FileAction', 'Open', 'Legacy');
       const file = await app.getFileLegacy();
       if (file) {
         app.readFile(file);
       }
       return;
     }
-  }
 
 
-  // If a fileHandle is provided, verify we have permission to read/write it,
-  // otherwise, show the file open prompt and allow the user to select the file.
-  if (fileHandle) {
-    // gaEvent('FileAction', 'OpenRecent', 'FSAccess');
-    if (await verifyPermission(fileHandle, true) === false) {
-      console.error(`User did not grant permission to '${fileHandle.name}'`);
-      return;
-    }
-  } else {
-    // gaEvent('FileAction', 'Open', 'FSAccess');
-    try {
-      fileHandle = await getFileHandle();
-    } catch (ex) {
-      if (ex.name === 'AbortError') {
+    // If a fileHandle is provided, verify we have permission to read/write it,
+    // otherwise, show the file open prompt and allow the user to select the file.
+    if (fileHandle) {
+      if (await verifyPermission(fileHandle, true) === false) {
+        console.error(`User did not grant permission to '${fileHandle.name}'`);
         return;
       }
-      // gaEvent('Error', 'FileOpen', ex.name);
-      const msg = 'An error occured trying to open the file.';
-      console.error(msg, ex);
-      alert(msg);
+    } else {
+      try {
+        fileHandle = await getFileHandle();
+      } catch (ex) {
+        if (ex.name === 'AbortError') {
+          return;
+        }
+        const msg = 'An error occured trying to open the file.';
+        console.error(msg, ex);
+        alert(msg);
+      }
     }
-  }
 
-  if (!fileHandle) {
-    return;
+    if (!fileHandle) {
+      return;
+    }
+    const file = await fileHandle.getFile();
+    app.readFile(file, fileHandle);
   }
-  const file = await fileHandle.getFile();
-  app.readFile(file, fileHandle);
+  else {
+    const response = await fetch(`/textEditor/${encodeURIComponent(fileHandle)}`);
+    const text = await response.text();
+    app.setText(text);
+    app.setFile(fileHandle);
+    app.setModified(false);
+    app.setFocus(true);
+  }
 };
 
 /**
@@ -132,7 +131,6 @@ app.readFile = async (file, fileHandle) => {
     app.setModified(false);
     app.setFocus(true);
   } catch (ex) {
-    gaEvent('Error', 'FileRead', ex.name);
     const msg = `An error occured reading ${app.fileName}`;
     console.error(msg, ex);
     alert(msg);
@@ -143,33 +141,49 @@ app.readFile = async (file, fileHandle) => {
  * Saves a file to disk.
  */
 app.saveFile = async () => {
-  try {
-    if (!app.file.handle) {
+  if (app.isLocal) {
+    try {
+      if (!app.file.handle) {
+        return await app.saveFileAs();
+      }
+      await writeFile(app.file.handle, app.getText());
+      app.setModified(false);
+    } catch (ex) {
+      const msg = 'Unable to save file';
+      console.error(msg, ex);
+      alert(msg);
+    }
+    app.setFocus();
+  }
+  else
+  {
+    if (!app.file.name) {
       return await app.saveFileAs();
     }
-    gaEvent('FileAction', 'Save');
-    await writeFile(app.file.handle, app.getText());
+    const response = await fetch(`/textEditor/${encodeURIComponent(app.file.name)}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'text/plain'
+      },
+      body: app.getText()
+    });
     app.setModified(false);
-  } catch (ex) {
-    gaEvent('Error', 'FileSave', ex.name);
-    const msg = 'Unable to save file';
-    console.error(msg, ex);
-    alert(msg);
+    app.setFocus();
   }
-  app.setFocus();
 };
 
 /**
  * Saves a new file to disk.
  */
 app.saveFileAs = async () => {
+  if (!app.isLocal) {
+    return app.showSave();
+  }
   if (!app.hasFSAccess) {
-    gaEvent('FileAction', 'Save As', 'Legacy');
     app.saveAsLegacy(app.file.name, app.getText());
     app.setFocus();
     return;
   }
-  gaEvent('FileAction', 'Save As', 'FSAccess');
   let fileHandle;
   try {
     fileHandle = await getNewFileHandle();
@@ -177,7 +191,6 @@ app.saveFileAs = async () => {
     if (ex.name === 'AbortError') {
       return;
     }
-    gaEvent('Error', 'FileSaveAs1', ex.name);
     const msg = 'An error occured trying to open the file.';
     console.error(msg, ex);
     alert(msg);
@@ -188,11 +201,9 @@ app.saveFileAs = async () => {
     app.setFile(fileHandle);
     app.setModified(false);
   } catch (ex) {
-    gaEvent('Error', 'FileSaveAs2', ex.name);
     const msg = 'Unable to save file.';
     console.error(msg, ex);
     alert(msg);
-    gaEvent('Error', 'Unable to write file', 'FSAccess');
     return;
   }
   app.setFocus();
@@ -205,6 +216,30 @@ app.quitApp = () => {
   if (!app.confirmDiscard()) {
     return;
   }
-  gaEvent('FileAction', 'Quit');
   window.close();
+};
+app.addMenu = (menu, name) => {
+  var htlmInsertMenu = `
+    <div id="${menu}" class="menuContainer">
+      <button class="menuTop" aria-label="File Tree" aria-haspopup="true" aria-expanded="false">
+        <span class="kbdShortcut">${menu}
+      </button>
+      <div id="menu${menu}" role="menu" class="menuItemContainer hidden">
+      </div>
+    </div>
+  `
+  var htmlInsertMenuItem = `
+    <button role="menuitem" class="menuItem" aria-label="${name}">${name}</button>
+  `
+  var menuBar = document.getElementsByClassName('menubar')[0];
+  for (var i = 0; i < menuBar.children.length; i++) {
+    if (menuBar.children[i].id.includes(menu)) {
+      menuBar.children[i].children[1].insertAdjacentHTML('beforeend', htmlInsertMenuItem);
+      const insertedElement = document.querySelector(`#menu${menu} .menuItem:last-child`);
+      return insertedElement;
+    }
+  }
+  menuBar.insertAdjacentHTML('beforeend', htlmInsertMenu);
+  const insertedElement = document.querySelector(`#menu${menu}`);
+  return insertedElement;
 };

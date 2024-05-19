@@ -61,6 +61,7 @@
       document.title = app.appName;
       spanFileName.textContent = app.appName;
       spanAppName.classList.toggle('hidden', true);
+      app.addRecent(fileHandle);
     }
   };
 
@@ -77,5 +78,13 @@
     const hidden = !val;
     modifiedHeader.classList.toggle('hidden', hidden);
     modifiedFooter.classList.toggle('hidden', hidden);
+  };
+  app.showOpen = () => {
+    document.getElementById('filePathModal').style.display = 'block';
+    document.getElementById('openFile').innerText = 'Open';
+  };
+  app.showSave = () => {
+    document.getElementById('filePathModal').style.display = 'block';
+    document.getElementById('openFile').innerText = 'Save';
   };
 })(app);

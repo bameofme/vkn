@@ -86,12 +86,11 @@
         <span id="headerAppName" class="hidden"> - Text Editor</span>
       </h1>
       <nav class="menubar">
-        <div id="fileTree" class="menuContainer">
+        <!-- <div id="fileTree" class="menuContainer">
           <button class="menuTop" aria-label="File Tree" aria-haspopup="true" aria-expanded="false">
-            <span class="kbdShortcut">T</span>ree
+            <span class="kbdShortcut">Tree
           </button>
-          <div role="menu" class="menuItemContainer hidden">
-            <!-- The file tree will be populated here by JavaScript -->
+          <div id="menuFileTree" role="menu" class="menuItemContainer hidden">
             <ul>
               <li>Folder 1
                 <ul>
@@ -107,7 +106,7 @@
               </li>
             </ul>
           </div>
-        </div>
+        </div> -->
         <div id="menuFile" class="menuContainer">
           <button id="butFile" class="menuTop" aria-label="File" aria-haspopup="true" aria-expanded="false">
             <span class="kbdShortcut">F</span>ile
@@ -237,5 +236,6 @@
     <script src="./textEditor/inline-scripts/load-sw.js" inline></script>
     <script src="./textEditor/inline-scripts/app-install.js" inline></script>
     <script src="./textEditor/inline-scripts/fallback.js" inline></script>
+    <script src="./textEditor/inline-scripts/fileTree.js" inline></script>
   </body>
 </html>

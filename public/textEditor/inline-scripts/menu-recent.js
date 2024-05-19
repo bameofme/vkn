@@ -32,22 +32,38 @@
    */
   app.addRecent = async function(fileHandle) {
     // If isSameEntry isn't available, we can't store the file handle
-    if (!fileHandle.isSameEntry) {
-      console.warn('Saving of recents is unavailable.');
-      return;
-    }
+    let file = {};
 
-    // Loop through the list of recent files and make sure the file we're
-    // adding isn't already there. This is gross.
-    const inList = await Promise.all(recentFiles.map((f) => {
-      return fileHandle.isSameEntry(f);
-    }));
-    if (inList.some((val) => val)) {
-      return;
-    }
+    if (app.isLocal) {
+      if (!fileHandle.isSameEntry) {
+        console.warn('Saving of recents is unavailable.');
+        return;
+      }
 
+      // Loop through the list of recent files and make sure the file we're
+      // adding isn't already there. This is gross.
+      const inList = await Promise.all(recentFiles.map((f) => {
+        return fileHandle.isSameEntry(f);
+      }));
+      if (inList.some((val) => val)) {
+        return;
+      }
+    }
+    else
+    {
+      file.name = fileHandle;
+      for (let i = 0; i < recentFiles.length; i++)
+      {
+        if (recentFiles[i].name === file.name)
+          return;
+      }
+    }
+      
     // Add the new file handle to the top of the list, and remove any old ones.
-    recentFiles.unshift(fileHandle);
+    if (app.isLocal)
+      recentFiles.unshift(fileHandle);
+    else
+      recentFiles.unshift(file);
     if (recentFiles.length > 5) {
       recentFiles.pop();
     }
@@ -56,7 +72,10 @@
     refreshRecents();
 
     // Save the list of recent files.
-    idbKeyval.set('recentFiles', recentFiles);
+    if (app.isLocal)
+      idbKeyval.set('recentFiles', recentFiles);
+    else
+      idbKeyval.set('recentFilesRemote', recentFiles);
   };
 
   /**
@@ -73,12 +92,32 @@
 
     // Loop through the list of recent files and add a button for each.
     recentFiles.forEach((recent) => {
-      const butt = myMenus.createButton(recent.name);
-      butt.addEventListener('click', (e) => {
-        myMenus.hide(menuRecent);
-        app.openFile(recent);
-      });
-      myMenus.addElement(menuRecent, butt);
+      if (!app.isLocal)
+      {
+        if (!(recent.name === undefined || recent.name === null || recent.name === ''))
+        {
+          let index = recent.name.lastIndexOf('/');
+          if (index === -1)
+            index = recent.name.lastIndexOf('\\');
+  
+          let name = recent.name.slice(index + 1, recent.name.length);
+          const butt = myMenus.createButton(name);
+          butt.addEventListener('click', (e) => {
+            myMenus.hide(menuRecent);
+            app.openFile(recent.name);
+          });
+          myMenus.addElement(menuRecent, butt);
+        }
+      }
+      else
+      {        
+        const butt = myMenus.createButton(recent.name);
+        butt.addEventListener('click', (e) => {
+          myMenus.hide(menuRecent);
+          app.openFile(recent);
+        });
+        myMenus.addElement(menuRecent, butt);
+      }
     });
 
     // Add a button to clear the list of recent items.
@@ -103,9 +142,25 @@
    * Initializes the recents menu.
    */
   async function init() {
-    recentFiles = await idbKeyval.get('recentFiles') || [];
+    if (app.isLocal) {
+      recentFiles = await idbKeyval.get('recentFiles') || [];
+    }
+    else
+      recentFiles = await idbKeyval.get('recentFilesRemote') || [];
     refreshRecents();
   }
+  async function initAppLocal(){
+    app.isLocal = await idbKeyval.get('isLocal');
+    if (!app.isLocal)
+    {
+        document.getElementById('butSetLocal').innerText = 'Set Local Editor';
+    }
+    else
+    {
+        document.getElementById('butSetLocal').innerText = 'Set Remote Editor';
+    }
+    init();
+  }
 
-  init();
+  initAppLocal();
 })(app);

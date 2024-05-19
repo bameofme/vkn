@@ -22,15 +22,30 @@
   document.getElementById('cancel').addEventListener('click', function() {
     document.getElementById('filePathModal').style.display = 'none';
   });
-  document.getElementById('butNew').addEventListener('click', () => {
+  document.getElementById('openFile').addEventListener('click', () => {
+    
     myMenus.hide(menuFile);
-    app.newFile();
+    let fileName = document.getElementById('filePath').value;
+    if (document.getElementById('openFile').innerText === 'Open')
+      app.openFile(fileName);
+    else
+    {
+      app.file.name = fileName;
+      app.saveFile();
+      app.addRecent(fileName);
+    }
+    document.getElementById('filePathModal').style.display = 'none';
   });
-
   document.getElementById('butOpen').addEventListener('click', () => {
     myMenus.hide(menuFile);
-    document.getElementById('filePathModal').style.display = 'block';
-    // app.openFile();
+    if (!app.isLocal)
+    {
+      app.showOpen();
+    }
+    else
+    {
+      app.openFile();
+    }
   });
 
   document.getElementById('butSave').addEventListener('click', () => {
@@ -53,10 +68,13 @@
     if (app.isLocal) {
       document.getElementById('butSetLocal').innerText = 'Set Local Editor';
       app.isLocal = false;
+      
     }
     else {
       document.getElementById('butSetLocal').innerText = 'Set Remote Editor';
       app.isLocal = true;
     }
+    idbKeyval.set('isLocal', app.isLocal);
+    window.location.reload();
   });
 })(app);

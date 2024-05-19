@@ -1,47 +1,61 @@
 const fs = require('fs');
 const path = require('path');
-const express = require('express');
-const router = express.Router();
-
-router.get('/file', (req, res) => {
-    const filePath = req.query.path;
-
-    // Validate filePath
-    if (!filePath) {
-        return res.status(400).send('Missing file path');
-    }
-
-    // Resolve the path in case it's relative
-    const absolutePath = path.resolve(filePath);
-
-    fs.readFile(absolutePath, 'utf8', (err, data) => {
+var currentDir = "C:\\Users\\sang.nguyen\\Downloads\\temp\\";
+function openFile(req, res) {
+    const fileName = req.params.fileName;
+    console.log(fileName);
+    fs.readFile(fileName, 'utf8', (err, data) => {
         if (err) {
             console.error(err);
-            return res.status(500).send('Error reading file');
+            res.status(500).send('Error reading file');
+            return;
         }
-
         res.send(data);
     });
-});
+}
+function saveFile(req, res) {
+    const fileName = req.params.fileName;
+    let data = '';
 
-router.get('/list', (req, res) => {
-    const dirPath = req.query.path;
-
-    // Validate dirPath
-    if (!dirPath) {
-        return res.status(400).send('Missing directory path');
-    }
-
-    // Resolve the path in case it's relative
-    const absolutePath = path.resolve(dirPath);
-
-    fs.readdir(absolutePath, (err, files) => {
-        if (err) {
-            console.error(err);
-            return res.status(500).send('Error reading directory');
-        }
-
-        res.send(files);
+    req.on('data', chunk => {
+        data += chunk;
     });
-});
-module.exports = router;
+
+    req.on('end', () => {
+        fs.writeFile(fileName, data, (err) => {
+            if (err) {
+                console.error(err);
+                res.status(500).send('Error writing file');
+                return;
+            }
+            res.send('File saved');
+        });
+    });
+}
+function getFiles() {
+    let results = [];
+    const list = fs.readdirSync(currentDir);
+    list.forEach(file => {
+        file = path.join(currentDir, file);
+        const stat = fs.statSync(file);
+
+        if (stat && stat.isDirectory()) {
+            results = results.concat(getFiles(file));
+        } else {
+            results.push(file);
+        }
+    });
+
+    return results;
+}
+function setDir(dir) {
+    currentDir = dir;
+}
+const textEditor = {
+    openFile,
+    saveFile,
+    getFiles,
+    setDir
+};
+
+module.exports = textEditor;

@@ -41,9 +41,4 @@ window.addEventListener('DOMContentLoaded', () => {
     console.log('🔕', 'Running on localhost, analytics not loaded.');
     return;
   }
-
-  /* Enable Google Analytics Here. */
-  // const gaScript = document.createElement('script');
-  // gaScript.src = 'https://www.google-analytics.com/analytics.js';
-  // document.head.appendChild(gaScript);
 });

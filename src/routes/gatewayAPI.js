@@ -1,4 +1,5 @@
 const { passport, accFnc } = require('./account');
+const textEditor  = require('./textEditor');
 const session = require('express-session');
 const express = require('express');
 const app = express();
@@ -11,7 +12,6 @@ function runSystem()
 {
     mongoose.connect('mongodb://127.0.0.1:27017/test')
     .then(() => console.log('Connected!'));
-    // Express.js configuration
     app.use(session({ secret: 'your session secret', resave: false, saveUninitialized: false }));
     app.use(passport.initialize());
     app.use(passport.session());
@@ -57,6 +57,21 @@ router.post('/login', passport.authenticate('local', {
 router.get('/logout', (req, res) => {
     req.logout();
     res.redirect('/login');
+});
+
+router.get('/textEditor/:fileName', ensureAuthenticated, (req, res) => {
+    return textEditor.openFile(req, res);
+});
+router.put('/textEditor/:fileName', ensureAuthenticated, (req, res) => {
+    return textEditor.saveFile(req, res);
+});
+router.get('/textEditor/workspace/files', ensureAuthenticated, (req, res) => {
+    console.log('get files');
+    const files = textEditor.getFiles();
+    res.json(files);
+});
+router.get('/textEditor/workspace', ensureAuthenticated, (req, res) => {
+    return textEditor.setDir(req.query.dir);
 });
 
 module.exports = { runSystem };
