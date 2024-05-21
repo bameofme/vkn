@@ -17,40 +17,52 @@
 'use strict';
 
 (function(app) {
-  const butInstall = document.getElementById('butInstall');
-
-  /**
-   * Track successful app installs
-   */
-  window.addEventListener('appinstalled', (e) => {
-    gaEvent('Install', 'installed');
-  });
-
-  /**
-   * Listen for 'beforeinstallprompt' event, and update the UI to indicate
-   * text-editor can be installed.
-   */
-  window.addEventListener('beforeinstallprompt', (e) => {
-    // Don't show the mini-info bar
-    e.preventDefault();
-
-    // Log that install is available.
-    gaEvent('Install', 'available');
-
-    // Save the deferred prompt
-    app.installPrompt = e;
-
-    // Show the install button
-    butInstall.removeAttribute('disabled');
-    butInstall.classList.remove('hidden');
+  const butInstall = document.getElementById('butInstallApp');
+  var menuInstalls = document.getElementById('menuInstall');
+  myMenus.setup(menuInstalls);
+  var listInstalls = [];
+  fetch('/listInstalls').then(function(response) {
+    return response.json();
+  }).then(function(installs) {
+    console.log(installs);
+    listInstalls = installs;
+    for (var i = 0; i < installs.length; i++) {
+      const butt = myMenus.createButton("Uninstall " + installs[i].name);
+      butt.addEventListener('click', function() {
+        let appName = butt.innerText.replace("Uninstall ", "");
+        fetch(`/unInstallApp/${encodeURIComponent(appName)}`);
+        window.location.reload();
+      });
+      myMenus.addElement(menuInstalls, butt);
+    }
   });
 
   // Handle the install button click
-  butInstall.addEventListener('click', () => {
-    butInstall.setAttribute('disabled', true);
-    app.installPrompt.prompt();
-    gaEvent('Install', 'clicked');
+// Handle the install button click
+butInstall.addEventListener('click', async () => {
+  const [fileHandle] = await window.showOpenFilePicker({
+    types: [{
+      description: 'Zip files',
+      accept: {
+        'application/zip': ['.zip'],
+      },
+    }],
   });
+  const file = await fileHandle.getFile();
+  const formData = new FormData();
+  formData.append('file', file);
+  const response = await fetch('/installApp', {
+    method: 'POST',
+    body: formData,
+  });
+  if (!response.ok) {
+    console.error('Upload failed');
+  }
+  else
+  {
+    window.location.reload();
+  }
+});
 
   myMenus.addKeyboardShortcut(butInstall);
 })(app);

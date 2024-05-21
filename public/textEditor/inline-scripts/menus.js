@@ -188,3 +188,29 @@ if (!app.isMac) {
     }
   });
 }
+
+myMenus.addMenu = (menu, name) => {
+  var htlmInsertMenu = `
+    <div id="menu${menu}" class="menuContainer">
+      <button class="menuTop" aria-label="File Tree" aria-haspopup="true" aria-expanded="false">
+        <span class="kbdShortcut">${menu}
+      </button>
+      <div role="menu" class="menuItemContainer hidden">
+      </div>
+    </div>
+  `
+  var htmlInsertMenuItem = `
+    <button role="menuitem" class="menuItem" aria-label="${name}">${name}</button>
+  `
+  var menuBar = document.getElementsByClassName('menubar')[0];
+  for (var i = 0; i < menuBar.children.length; i++) {
+    if (menuBar.children[i].id.includes(menu)) {
+      menuBar.children[i].children[1].insertAdjacentHTML('beforeend', htmlInsertMenuItem);
+      const insertedElement = document.querySelector(`#menu${menu} .menuItem:last-child`);
+      return insertedElement;
+    }
+  }
+  menuBar.insertAdjacentHTML('beforeend', htlmInsertMenu);
+  const insertedElement = document.querySelector(`#menu${menu}`);
+  return insertedElement;
+};

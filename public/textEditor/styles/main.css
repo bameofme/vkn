@@ -160,6 +160,10 @@ header h1 {
 #fileTree li ul li::before {
   content: '📁'; /* Add a folder icon before each folder */
 }
+.menuItemContainer {
+  max-height: 600px; /* Adjust this value based on the height of your buttons */
+  overflow-y: auto;
+}
 .menuContainer {
   display: inline-block;
   position: relative;

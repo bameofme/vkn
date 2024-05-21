@@ -218,28 +218,20 @@ app.quitApp = () => {
   }
   window.close();
 };
-app.addMenu = (menu, name) => {
-  var htlmInsertMenu = `
-    <div id="${menu}" class="menuContainer">
-      <button class="menuTop" aria-label="File Tree" aria-haspopup="true" aria-expanded="false">
-        <span class="kbdShortcut">${menu}
-      </button>
-      <div id="menu${menu}" role="menu" class="menuItemContainer hidden">
-      </div>
-    </div>
-  `
-  var htmlInsertMenuItem = `
-    <button role="menuitem" class="menuItem" aria-label="${name}">${name}</button>
-  `
-  var menuBar = document.getElementsByClassName('menubar')[0];
-  for (var i = 0; i < menuBar.children.length; i++) {
-    if (menuBar.children[i].id.includes(menu)) {
-      menuBar.children[i].children[1].insertAdjacentHTML('beforeend', htmlInsertMenuItem);
-      const insertedElement = document.querySelector(`#menu${menu} .menuItem:last-child`);
-      return insertedElement;
+app.getListFiles = async (dir) => {
+  if (app.isLocal) {
+    const dirHandle = await window.showDirectoryPicker();
+    const files = [];
+    for await (const entry of dirHandle.values()) {
+      if (entry.kind === 'file') {
+        files.push(entry);
+      }
     }
+    return files;
   }
-  menuBar.insertAdjacentHTML('beforeend', htlmInsertMenu);
-  const insertedElement = document.querySelector(`#menu${menu}`);
-  return insertedElement;
-};
+  else {
+    const response = await fetch(`/textEditor/workspace/${encodeURIComponent(dir)}`);
+    const files = await response.json();
+    return files;
+  }
+}

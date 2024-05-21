@@ -7,6 +7,8 @@ const mongoose = require('mongoose');
 const router = express.Router();
 const path = require('path');
 const flash = require('express-flash');
+const multer  = require('multer');
+const upload = multer({ dest: 'uploads/' });
 
 function runSystem()
 {
@@ -19,7 +21,10 @@ function runSystem()
     app.use(express.urlencoded({ extended: true }));
     app.use(flash());
     app.set('view engine', 'ejs');
-    app.set('views', path.join(__dirname, '../../public/account'));
+    app.set('views', [
+        path.join(__dirname, '../../public/account'),
+        path.join(__dirname, '../../public/textEditor')
+      ]);
     // Routes
     app.use('/', router);
     const port = process.env.PORT || 3000;
@@ -34,7 +39,7 @@ function ensureAuthenticated(req, res, next) {
     }
 }
 router.get('/', ensureAuthenticated, (req, res) => {
-    res.sendFile(path.join(__dirname, '../../public/textEditor', 'index.html'));
+    res.render('index', { script: textEditor.getlistScritps(), styles: textEditor.getlistStyles()});
 })
 router.get('/register', (req, res) => {
     res.render('register', { message: req.flash('message') });
@@ -65,13 +70,19 @@ router.get('/textEditor/:fileName', ensureAuthenticated, (req, res) => {
 router.put('/textEditor/:fileName', ensureAuthenticated, (req, res) => {
     return textEditor.saveFile(req, res);
 });
-router.get('/textEditor/workspace/files', ensureAuthenticated, (req, res) => {
-    console.log('get files');
-    const files = textEditor.getFiles();
+router.get('/textEditor/workspace/:dir', ensureAuthenticated, (req, res) => {
+    const files = textEditor.getFiles(req.params.dir);
     res.json(files);
 });
-router.get('/textEditor/workspace', ensureAuthenticated, (req, res) => {
-    return textEditor.setDir(req.query.dir);
+
+router.post('/installApp', ensureAuthenticated, upload.single('file'), (req, res) => {
+   return textEditor.installApp(req, res);
+});
+router.get('/unInstallApp/:appName', ensureAuthenticated, (req, res) => {
+    return textEditor.unInstallApp(req, res);
+});
+router.get('/listInstalls', ensureAuthenticated, (req, res) => {
+    return textEditor.getListApp(req, res);
 });
 
 module.exports = { runSystem };

@@ -64,6 +64,7 @@
     <link rel="stylesheet" href="/textEditor/styles/main.css" inline>
     <link rel="stylesheet" href="/textEditor/styles/standalone.css" inline>
     <link rel="stylesheet" media="print" href="/textEditor/styles/print.css" inline>
+    <%- styles %>
 
     <!-- Origin Trial Token NFS API v1 (expires 2020-05-12) -->
     <meta http-equiv="origin-trial" content="ApP5hRHS+dIxGdu/1psSHsErxROE+aVFGqdUwBgrcsGuwWDpPo3iqanpH3EdEie7YHhBN0LL1sdkT89waJPbzwsAAABkeyJvcmlnaW4iOiJodHRwczovL2dvb2dsZWNocm9tZWxhYnMuZ2l0aHViLmlvOjQ0MyIsImZlYXR1cmUiOiJOYXRpdmVGaWxlU3lzdGVtIiwiZXhwaXJ5IjoxNTg5MzI3OTk5fQ==">
@@ -178,9 +179,14 @@
           </div>
         </div>
         <div id="menuInstall" class="menuContainer">
-          <button id="butInstall" aria-label="Install" class="menuTop hidden">
+          <button id="butInstall" class="menuTop" aria-label="Install" class="menuTop hidden">
               <span class="kbdShortcut">I</span>nstall
           </button>
+          <div role="menu" class="menuItemContainer hidden">
+            <button id="butInstallApp" type="button" role="menuitem">
+              Install App
+            </button>
+          </div>
         </div>
       </nav>
     </header>
@@ -236,6 +242,6 @@
     <script src="./textEditor/inline-scripts/load-sw.js" inline></script>
     <script src="./textEditor/inline-scripts/app-install.js" inline></script>
     <script src="./textEditor/inline-scripts/fallback.js" inline></script>
-    <script src="./textEditor/inline-scripts/fileTree.js" inline></script>
+    <%- script %>
   </body>
 </html>

@@ -23,16 +23,20 @@
     document.getElementById('filePathModal').style.display = 'none';
   });
   document.getElementById('openFile').addEventListener('click', () => {
-    
     myMenus.hide(menuFile);
     let fileName = document.getElementById('filePath').value;
-    if (document.getElementById('openFile').innerText === 'Open')
-      app.openFile(fileName);
+    if (app.openCallBack)
+      app.openCallBack(fileName);
     else
     {
-      app.file.name = fileName;
-      app.saveFile();
-      app.addRecent(fileName);
+      if (document.getElementById('openFile').innerText === 'Open')
+        app.openFile(fileName);
+      else
+      {
+        app.file.name = fileName;
+        app.saveFile();
+        app.addRecent(fileName);
+      }
     }
     document.getElementById('filePathModal').style.display = 'none';
   });
