@@ -38,7 +38,7 @@ const cpuChart = new Chart(ctx, {
 
 async function fetchStatus() {
     try {
-        const response = await fetch('http://localhost:3000/status');
+        const response = await fetch('/status');
         const data = await response.json();
         document.getElementById('cpu-usage').textContent = data.cpuUsage.toFixed(2);
         document.getElementById('memory-usage').textContent = ((data.memory.used / data.memory.total) * 100).toFixed(2);
@@ -63,7 +63,7 @@ document.getElementById('config-form').addEventListener('submit', async function
     const powerPlan = document.getElementById('power-plan').value;
     const timezone = document.getElementById('timezone').value;
 
-    const response = await fetch('http://localhost:3000/config', {
+    const response = await fetch('config', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'

@@ -2,6 +2,8 @@ const { passport, accFnc } = require('./account');
 const textEditor  = require('./textEditor');
 const status = require('./status');
 const config = require('./config');
+const fs = require('fs');
+const https = require('https');
 const session = require('express-session');
 const express = require('express');
 const app = express();
@@ -32,8 +34,15 @@ function runSystem()
       ]);
     // Routes
     app.use('/', router);
+    const privateKey = fs.readFileSync('key.pem', 'utf8');
+    const certificate = fs.readFileSync('cert.pem', 'utf8');
+    const credentials = { key: privateKey, cert: certificate };
     const port = process.env.PORT || 3000;
-    app.listen(port, () => console.log(`Server is listening on port ${port}`));
+    const httpsServer = https.createServer(credentials, app);
+    httpsServer.listen(port, () => {
+        console.log(`HTTPS Server is running on https://localhost:${port}`);
+      });
+    // app.listen(port, () => console.log(`Server is listening on port ${port}`));
 }
 function ensureAuthenticated(req, res, next) {
     if (req.isAuthenticated()) {
